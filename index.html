@@ -80,25 +80,28 @@
     </div>
 
     <!-- Navigation Tabs -->
-    <div class="grid grid-cols-4 p-1.5 bg-neutral-950 border-b border-neutral-800 text-[11px] font-medium sticky top-9 z-40">
-      <button onclick="switchScreen('record')" id="tab-record" class="py-2 rounded-md bg-white text-black font-semibold text-center transition">
+    <div class="grid grid-cols-5 p-1.5 bg-neutral-950 border-b border-neutral-800 text-[10px] font-medium sticky top-9 z-40">
+      <button onclick="switchScreen('auth')" id="tab-auth" class="py-2 rounded-md bg-white text-black font-semibold text-center transition">
+        เข้าสู่ระบบ
+      </button>
+      <button onclick="switchScreen('record')" id="tab-record" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
         บันทึกงาน
       </button>
+      <button onclick="switchScreen('edit')" id="tab-edit" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
+        แก้ไขไฟล์
+      </button>
       <button onclick="switchScreen('dossier')" id="tab-dossier" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
-        รายงานสรุป
+        รายงาน
       </button>
       <button onclick="switchScreen('landing')" id="tab-landing" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
         หน้าหลัก
-      </button>
-      <button onclick="switchScreen('auth')" id="tab-auth" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
-        เข้าสู่ระบบ
       </button>
     </div>
 
     <!-- ========================================================================= -->
     <!-- SCREEN 1: RECORD & TIME-SYNC PHOTO CAPTURE -->
     <!-- ========================================================================= -->
-    <div id="screen-record" class="flex-1 p-4 space-y-4 pb-24">
+    <div id="screen-record" class="hidden flex-1 p-4 space-y-4 pb-24">
       
       <!-- Session Details Card -->
       <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-1.5">
@@ -213,11 +216,123 @@
         </p>
       </div>
 
-      <!-- Finish Button -->
-      <button onclick="switchScreen('dossier')" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 active:bg-neutral-200 transition shadow-lg">
-        <span>สิ้นสุดการเข้าพบ & ดูรายงานสรุป</span>
+      <!-- Finish Button -> ไปหน้าแก้ไขไฟล์ -->
+      <button onclick="switchScreen('edit')" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 active:bg-neutral-200 transition shadow-lg">
+        <span>สิ้นสุดการเข้าพบ & ไปตรวจแก้ไฟล์ (Edit)</span>
         <span>→</span>
       </button>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN: EDIT & REVIEW FILE (หน้าแก้ไขไฟล์ที่บันทึกไว้) -->
+    <!-- ========================================================================= -->
+    <div id="screen-edit" class="hidden flex-1 p-4 space-y-4 pb-24">
+      
+      <!-- Edit Header -->
+      <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
+        <div>
+          <span class="text-[10px] font-mono uppercase text-neutral-400">FILE EDITOR & AUDIT</span>
+          <h2 class="text-sm font-bold text-white">แก้ไขข้อมูลไฟล์ที่บันทึก</h2>
+        </div>
+        <button onclick="saveFileEdits()" class="px-3.5 py-1.5 rounded-lg bg-white text-black text-xs font-bold active:bg-neutral-200 transition flex items-center gap-1 shadow-sm">
+          <span>✓ บันทึกข้อมูล</span>
+        </button>
+      </div>
+
+      <!-- Section 1: Meeting Meta -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-3">
+        <span class="text-[11px] font-bold text-white uppercase font-mono">1. ข้อมูลการประชุมและองค์กร</span>
+        
+        <div class="space-y-1">
+          <label class="text-[10px] text-neutral-400 font-medium">ชื่อลูกค้า / บริษัท</label>
+          <input type="text" id="edit-client-name" value="บมจ. ปูนซิเมนต์ไทย (SCG)" class="w-full px-3 py-2 rounded-lg bg-black border border-neutral-800 text-xs text-white focus:outline-none focus:border-white">
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[10px] text-neutral-400 font-medium">หัวข้อการประชุม / วัตถุประสงค์</label>
+          <input type="text" id="edit-meeting-title" value="การประชุมยืนยันสเปกระบบเชื่อมต่อคลังสินค้า" class="w-full px-3 py-2 rounded-lg bg-black border border-neutral-800 text-xs text-white focus:outline-none focus:border-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10px] text-neutral-400 font-medium">เลขที่เอกสาร</label>
+            <input type="text" id="edit-doc-id" value="DOC: 2026-089" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-neutral-800 text-xs font-mono text-white focus:outline-none focus:border-white">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] text-neutral-400 font-medium">วันที่บันทึก</label>
+            <input type="text" id="edit-doc-date" value="11/10/2026" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-neutral-800 text-xs font-mono text-white focus:outline-none focus:border-white">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Executive Summary -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-white uppercase font-mono">2. แก้ไขข้อความสรุปมติ (Executive Summary)</span>
+          <span class="text-[10px] text-neutral-500 font-mono">จะแสดงใน PDF</span>
+        </div>
+        <textarea id="edit-summary-text" rows="4" class="w-full p-2.5 rounded-lg bg-black border border-neutral-800 text-xs text-neutral-200 leading-relaxed focus:outline-none focus:border-white resize-none">ลูกค้า (SCG) อนุมัติสเปกตามแบบร่างบนไวท์บอร์ด (อ้างอิงรูป #1 ที่เวลา 00:15) ตกลงกรอบเวลาส่งมอบ 45 วัน ฝ่ายเราต้องส่งใบเสนอราคาแก้ไขภายในวันที่ 15 ต.ค.</textarea>
+      </div>
+
+      <!-- Section 3: Action Items -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-white uppercase font-mono">3. แก้ไขรายการมอบหมายงาน (Action Items)</span>
+          <button onclick="addEditableActionItem()" class="text-[10px] text-white font-mono hover:underline">+ เพิ่มงานใหม่</button>
+        </div>
+
+        <div id="edit-action-items-container" class="space-y-2">
+          <!-- Item 1 -->
+          <div class="editable-action-row p-2.5 rounded-lg border border-neutral-800 bg-black space-y-1.5">
+            <div class="flex items-center justify-between">
+              <input type="text" class="action-task-input w-full bg-transparent text-xs text-white font-medium focus:outline-none border-b border-transparent focus:border-neutral-700 pb-0.5" value="ส่งใบเสนอราคาฉบับแก้ไขตามสเปกใหม่">
+              <button onclick="this.closest('.editable-action-row').remove()" class="text-neutral-500 hover:text-white text-xs ml-2">✕</button>
+            </div>
+            <div class="flex items-center gap-2 text-[10px]">
+              <span class="text-neutral-500">ผู้รับผิดชอบ:</span>
+              <input type="text" class="action-assignee-input bg-transparent text-neutral-300 w-28 focus:outline-none border-b border-transparent focus:border-neutral-700" value="นายกานต์ (ฝ่ายขาย)">
+              <span class="text-neutral-500">กำหนด:</span>
+              <input type="text" class="action-date-input bg-transparent font-mono text-neutral-300 w-16 focus:outline-none border-b border-transparent focus:border-neutral-700" value="15 ต.ค.">
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="editable-action-row p-2.5 rounded-lg border border-neutral-800 bg-black space-y-1.5">
+            <div class="flex items-center justify-between">
+              <input type="text" class="action-task-input w-full bg-transparent text-xs text-white font-medium focus:outline-none border-b border-transparent focus:border-neutral-700 pb-0.5" value="ทดสอบความเร็ว Gateway ณ คลังสินค้าจริง">
+              <button onclick="this.closest('.editable-action-row').remove()" class="text-neutral-500 hover:text-white text-xs ml-2">✕</button>
+            </div>
+            <div class="flex items-center gap-2 text-[10px]">
+              <span class="text-neutral-500">ผู้รับผิดชอบ:</span>
+              <input type="text" class="action-assignee-input bg-transparent text-neutral-300 w-28 focus:outline-none border-b border-transparent focus:border-neutral-700" value="ทีมวิศวกร (วีระศักดิ์)">
+              <span class="text-neutral-500">กำหนด:</span>
+              <input type="text" class="action-date-input bg-transparent font-mono text-neutral-300 w-16 focus:outline-none border-b border-transparent focus:border-neutral-700" value="22 ต.ค.">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: OCR Image Text -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-2">
+        <span class="text-[11px] font-bold text-white uppercase font-mono">4. แก้ไขข้อความภาพถ่ายเอกสารอ้างอิง</span>
+        <div class="space-y-1">
+          <label class="text-[10px] text-neutral-400 font-medium">คำอธิบายภาพถ่าย #1</label>
+          <input type="text" id="edit-img-caption" value="ภาพไวท์บอร์ดห้อง A (นาที 00:15)" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-neutral-800 text-xs text-white focus:outline-none focus:border-white">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] text-neutral-400 font-medium">ข้อความ OCR</label>
+          <input type="text" id="edit-img-ocr" value="ส่งข้อมูลผ่าน Gateway ไปยังคลังสินค้า... ไม่เกิน 1.5 วินาที" class="w-full px-2.5 py-1.5 rounded-lg bg-black border border-neutral-800 text-xs text-neutral-300 focus:outline-none focus:border-white">
+        </div>
+      </div>
+
+      <!-- Save & Proceed Button -->
+      <div class="space-y-2 pt-1">
+        <button onclick="saveFileEdits()" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:bg-neutral-200 transition">
+          <span>✓ บันทึกการแก้ไข & ดูรายงานสรุป</span>
+          <span>→</span>
+        </button>
+      </div>
 
     </div>
 
@@ -378,7 +493,7 @@
     <!-- ========================================================================= -->
     <!-- SCREEN 4: CORPORATE AUTH -->
     <!-- ========================================================================= -->
-    <div id="screen-auth" class="hidden flex-1 p-5 space-y-6 flex flex-col justify-center pb-24">
+    <div id="screen-auth" class="flex-1 p-5 space-y-6 flex flex-col justify-center pb-24">
       <div class="text-center space-y-2">
         <div class="w-10 h-10 rounded-xl bg-white text-black font-bold flex items-center justify-center text-sm mx-auto">
           D
@@ -423,14 +538,18 @@
     </div>
 
     <!-- Mobile Bottom Navigation Bar (Persistent) -->
-    <div class="absolute bottom-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-md border-t border-neutral-900 flex items-center justify-around px-4 z-40">
-      <button onclick="switchScreen('record')" class="flex flex-col items-center gap-1 text-white">
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-md border-t border-neutral-900 flex items-center justify-around px-2 z-40">
+      <button onclick="switchScreen('record')" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
         <span class="text-sm">🎙</span>
         <span class="text-[10px] font-medium">อัดเสียง</span>
       </button>
       <button onclick="document.getElementById('camera-input').click()" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
         <span class="text-sm">📷</span>
         <span class="text-[10px] font-medium">สแกนรูป</span>
+      </button>
+      <button onclick="switchScreen('edit')" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
+        <span class="text-sm">✏️</span>
+        <span class="text-[10px] font-medium">แก้ไข</span>
       </button>
       <button onclick="switchScreen('dossier')" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
         <span class="text-sm">📑</span>
@@ -556,18 +675,72 @@
 
     // Switch between screens
     function switchScreen(screenId) {
-      ['record', 'dossier', 'landing', 'auth'].forEach(s => {
-        document.getElementById('screen-' + s).classList.add('hidden');
+      ['auth', 'record', 'edit', 'dossier', 'landing'].forEach(s => {
+        const el = document.getElementById('screen-' + s);
+        if (el) el.classList.add('hidden');
         const tab = document.getElementById('tab-' + s);
         if (tab) {
           tab.className = 'py-2 rounded-md text-neutral-400 hover:text-white text-center transition';
         }
       });
-      document.getElementById('screen-' + screenId).classList.remove('hidden');
+      const targetScreen = document.getElementById('screen-' + screenId);
+      if (targetScreen) targetScreen.classList.remove('hidden');
       const activeTab = document.getElementById('tab-' + screenId);
       if (activeTab) {
         activeTab.className = 'py-2 rounded-md bg-white text-black font-semibold text-center transition';
       }
+    }
+
+    // Save File Edits and Sync with Report & PDF
+    function saveFileEdits() {
+      const clientName = document.getElementById('edit-client-name').value;
+      const meetingTitle = document.getElementById('edit-meeting-title').value;
+      const docId = document.getElementById('edit-doc-id').value;
+      const docDate = document.getElementById('edit-doc-date').value;
+      const summaryText = document.getElementById('edit-summary-text').value;
+
+      // Update Session Card in Record Screen
+      const sessionClient = document.querySelector('#screen-record h2');
+      if (sessionClient) sessionClient.innerText = clientName;
+      const sessionTitle = document.querySelector('#screen-record .border-neutral-800 p');
+      if (sessionTitle) sessionTitle.innerText = meetingTitle;
+
+      // Update Report Screen
+      const reportSummary = document.querySelector('#screen-dossier p');
+      if (reportSummary) reportSummary.innerText = summaryText;
+
+      // Update PDF Header & Meta
+      const pdfTitle = document.querySelector('.print-container .border-b-2 div div:first-child');
+      if (pdfTitle) pdfTitle.innerText = 'DOSSIER — ' + clientName;
+      const pdfDocMeta = document.querySelector('.print-container .text-right');
+      if (pdfDocMeta) {
+        pdfDocMeta.innerHTML = `<div>${docId}</div><div>${docDate}</div>`;
+      }
+      const pdfSummary = document.querySelector('.print-container p');
+      if (pdfSummary) pdfSummary.innerText = summaryText;
+
+      alert('✓ บันทึกการแก้ไขข้อมูลเรียบร้อยแล้ว!\nหน้ารายงานสรุปและเอกสาร PDF ได้รับการอัปเดตตามข้อมูลใหม่ทันที');
+      switchScreen('dossier');
+    }
+
+    // Add new Action Item row in Edit Screen
+    function addEditableActionItem() {
+      const container = document.getElementById('edit-action-items-container');
+      const newRow = document.createElement('div');
+      newRow.className = 'editable-action-row p-2.5 rounded-lg border border-neutral-800 bg-black space-y-1.5';
+      newRow.innerHTML = `
+        <div class="flex items-center justify-between">
+          <input type="text" class="action-task-input w-full bg-transparent text-xs text-white font-medium focus:outline-none border-b border-transparent focus:border-neutral-700 pb-0.5" placeholder="ระบุงานที่ต้องดำเนินการต่อ...">
+          <button onclick="this.closest('.editable-action-row').remove()" class="text-neutral-500 hover:text-white text-xs ml-2">✕</button>
+        </div>
+        <div class="flex items-center gap-2 text-[10px]">
+          <span class="text-neutral-500">ผู้รับผิดชอบ:</span>
+          <input type="text" class="action-assignee-input bg-transparent text-neutral-300 w-28 focus:outline-none border-b border-transparent focus:border-neutral-700" placeholder="ชื่อผู้รับผิดชอบ">
+          <span class="text-neutral-500">กำหนด:</span>
+          <input type="text" class="action-date-input bg-transparent font-mono text-neutral-300 w-16 focus:outline-none border-b border-transparent focus:border-neutral-700" placeholder="วันที่">
+        </div>
+      `;
+      container.appendChild(newRow);
     }
 
     // Real Microphone Toggle & Web Audio Analyser
