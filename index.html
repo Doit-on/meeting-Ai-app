@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DOSSIER — Mobile & Field Meeting Intelligence</title>
+  <!-- Tailwind CSS CDN for GitHub Pages Deployment -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: IBM Plex Sans Thai, Space Grotesk, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --font-thai: 'IBM Plex Sans Thai', -apple-system, sans-serif;
+      --font-display: 'Space Grotesk', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body {
+      font-family: var(--font-thai);
+      background-color: #000000;
+      color: #ffffff;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-display { font-family: var(--font-display); }
+    .font-mono { font-family: var(--font-mono); }
+
+    /* Strict monochrome scrollbars */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: #000000; }
+    ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 2px; }
+
+    /* Print styles for Vector-crisp PDF generation */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-container {
+        display: block !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        padding: 15mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen antialiased flex flex-col items-center justify-start p-0 sm:py-6 sm:px-4">
+
+  <!-- Hidden Native Camera / File Input -->
+  <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)">
+
+  <!-- Mobile Frame Container (Full screen on phone, sleek centered frame on desktop) -->
+  <div class="no-print w-full max-w-md bg-black sm:border sm:border-neutral-800 sm:rounded-[36px] sm:shadow-2xl overflow-hidden flex flex-col min-h-screen sm:min-h-[844px] relative">
+    
+    <!-- Mobile Status Bar -->
+    <div class="px-5 pt-3 pb-2 flex items-center justify-between text-xs text-neutral-400 font-mono border-b border-neutral-900 bg-black sticky top-0 z-50">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-white tracking-widest text-sm">DOSSIER</span>
+        <span class="text-[10px] px-1.5 py-0.2 rounded border border-neutral-800 text-neutral-400 font-mono">B&W</span>
+      </div>
+      <div class="flex items-center gap-2 text-[11px]">
+        <span id="rec-status-dot" class="w-1.5 h-1.5 rounded-full bg-neutral-600"></span>
+        <span id="rec-status-badge">STANDBY</span>
+        <span class="text-neutral-600">|</span>
+        <span id="clock-display">14:30</span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="grid grid-cols-4 p-1.5 bg-neutral-950 border-b border-neutral-800 text-[11px] font-medium sticky top-9 z-40">
+      <button onclick="switchScreen('record')" id="tab-record" class="py-2 rounded-md bg-white text-black font-semibold text-center transition">
+        บันทึกงาน
+      </button>
+      <button onclick="switchScreen('dossier')" id="tab-dossier" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
+        รายงานสรุป
+      </button>
+      <button onclick="switchScreen('landing')" id="tab-landing" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
+        หน้าหลัก
+      </button>
+      <button onclick="switchScreen('auth')" id="tab-auth" class="py-2 rounded-md text-neutral-400 hover:text-white text-center transition">
+        เข้าสู่ระบบ
+      </button>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 1: RECORD & TIME-SYNC PHOTO CAPTURE -->
+    <!-- ========================================================================= -->
+    <div id="screen-record" class="flex-1 p-4 space-y-4 pb-24">
+      
+      <!-- Session Details Card -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-mono uppercase tracking-widest text-neutral-400">การเข้าพบลูกค้า (ACTIVE SESSION)</span>
+          <span class="text-[10px] font-mono px-2 py-0.5 rounded border border-neutral-700 bg-neutral-900 text-white">#VST-2026-04</span>
+        </div>
+        <h2 class="text-sm font-bold text-white">บมจ. ปูนซิเมนต์ไทย (SCG)</h2>
+        <p class="text-xs text-neutral-400">การประชุมยืนยันสเปกระบบเชื่อมต่อคลังสินค้า</p>
+      </div>
+
+      <!-- Real Microphone Recording HUD -->
+      <div class="border border-neutral-800 rounded-2xl p-5 bg-black text-center space-y-4">
+        <div class="flex items-center justify-between text-xs font-mono">
+          <span class="flex items-center gap-2">
+            <span id="mic-pulse-dot" class="w-2.5 h-2.5 rounded-full bg-neutral-600"></span>
+            <span id="mic-status-label" class="text-white font-medium">กดปุ่มเพื่อเริ่มอัดเสียงจริง</span>
+          </span>
+          <span id="timer-counter" class="text-white text-sm font-bold font-mono">00:00</span>
+        </div>
+
+        <!-- Real Dynamic Audio Waveform -->
+        <div id="waveform-container" class="h-12 flex items-center justify-center gap-1.5 px-2">
+          <div class="wave-bar w-1 h-2 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-3 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-5 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-3 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-4 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-6 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-4 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-5 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-3 bg-neutral-800 rounded-full transition-all duration-150"></div>
+          <div class="wave-bar w-1 h-2 bg-neutral-800 rounded-full transition-all duration-150"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="toggleMicrophone()" id="btn-toggle-mic" class="py-3 px-3 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 active:bg-neutral-200 transition">
+            <span id="mic-btn-icon">🎙</span>
+            <span id="mic-btn-text">เริ่มบันทึกเสียง</span>
+          </button>
+
+          <button onclick="document.getElementById('camera-input').click()" class="py-3 px-3 rounded-xl border border-neutral-700 bg-neutral-950 text-white font-semibold text-xs flex items-center justify-center gap-2 active:bg-neutral-900 transition">
+            <span>📷 ถ่ายรูปเอกสาร</span>
+          </button>
+        </div>
+
+        <!-- Playback Audio Bar (Appears when recording is stopped) -->
+        <div id="audio-playback-box" class="hidden p-2.5 rounded-xl border border-neutral-800 bg-neutral-950 flex items-center justify-between text-xs">
+          <span>🔊 ฟังเสียงที่เพิ่งบันทึก</span>
+          <audio id="recorded-audio-player" controls class="h-7 w-44"></audio>
+        </div>
+
+        <div class="text-[10px] text-neutral-400 text-left font-mono border-t border-neutral-900 pt-2 flex items-center justify-between">
+          <span>บันทึกแบบ CHUNK / กันเสียงหาย</span>
+          <span class="text-white font-bold">OPUS / WEBM HD</span>
+        </div>
+      </div>
+
+      <!-- Time-Synced Documents List -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-neutral-300">เอกสารและภาพถ่ายที่ผูกกับเสียง (<span id="doc-count">2</span> ไฟล์)</span>
+          <span class="text-neutral-400 font-mono text-[10px]">TIME-SYNC ON</span>
+        </div>
+
+        <div id="attachments-list" class="space-y-2">
+          <!-- Item 1 -->
+          <div class="border border-neutral-800 rounded-xl p-3 bg-neutral-950 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-neutral-900 border border-neutral-700 rounded-lg flex items-center justify-center text-xs font-mono text-neutral-400">
+                [สเก็ตช์]
+              </div>
+              <div class="text-left">
+                <div class="text-xs font-semibold text-white">ไวท์บอร์ด: ผังสเปกระบบ V2</div>
+                <div class="text-[10px] text-neutral-400 truncate max-w-[170px] mt-0.5">
+                  OCR: ส่งข้อมูลผ่าน Gateway 1.5 วินาที
+                </div>
+              </div>
+            </div>
+            <span class="font-mono text-xs px-2 py-0.5 rounded border border-neutral-700 bg-black text-white font-bold">00:15</span>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="border border-neutral-800 rounded-xl p-3 bg-neutral-950 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 bg-neutral-900 border border-neutral-700 rounded-lg flex items-center justify-center text-xs font-mono text-neutral-400">
+                [สัญญา]
+              </div>
+              <div class="text-left">
+                <div class="text-xs font-semibold text-white">สัญญาแนบท้ายเดิม (ข้อ 4.2)</div>
+                <div class="text-[10px] text-neutral-400 truncate max-w-[170px] mt-0.5">
+                  OCR: เงื่อนไขการส่งมอบงาน 45 วัน
+                </div>
+              </div>
+            </div>
+            <span class="font-mono text-xs px-2 py-0.5 rounded border border-neutral-700 bg-black text-white font-bold">01:40</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Transcribe Preview -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-1.5">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-neutral-300">ข้อความถอดเสียงแบบเรียลไทม์</span>
+          <span class="text-neutral-500 font-mono text-[10px]">SPEAKER DIARIZATION</span>
+        </div>
+        <p class="text-xs text-neutral-300 leading-relaxed font-sans">
+          <span class="text-neutral-500 font-mono">[00:15] </span>
+          <strong class="text-white">ลูกค้า (SCG):</strong>
+          "ถ้ายึดตามที่วาดบนกระดานนี้ ฝ่ายจัดซื้อก็ไม่มีปัญหาเรื่องงบประมาณครับ สามารถเริ่มงานเฟสแรกได้ทันที..."
+        </p>
+      </div>
+
+      <!-- Finish Button -->
+      <button onclick="switchScreen('dossier')" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 active:bg-neutral-200 transition shadow-lg">
+        <span>สิ้นสุดการเข้าพบ & ดูรายงานสรุป</span>
+        <span>→</span>
+      </button>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 2: DOSSIER REPORT & PDF EXPORT -->
+    <!-- ========================================================================= -->
+    <div id="screen-dossier" class="hidden flex-1 p-4 space-y-4 pb-24">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-2 border-b border-neutral-800">
+        <div>
+          <span class="text-[10px] font-mono uppercase text-neutral-400">MINUTES OF MEETING & VISIT DOSSIER</span>
+          <h2 class="text-sm font-bold text-white">รายงานสรุปการเข้าพบลูกค้า</h2>
+        </div>
+        <button onclick="openPdfModal()" class="px-3 py-1.5 rounded-lg bg-white text-black text-xs font-bold active:bg-neutral-200 transition">
+          สร้าง PDF
+        </button>
+      </div>
+
+      <!-- 1. Executive Summary -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-1.5">
+        <span class="text-[11px] font-bold text-white uppercase font-mono">1. สรุปใจความสำคัญ (EXECUTIVE SUMMARY)</span>
+        <p class="text-xs text-neutral-300 leading-relaxed">
+          ลูกค้าอนุมัติสเปกตามแบบร่างบนไวท์บอร์ด (อ้างอิงรูป #1 ที่เวลา 00:15) ตกลงกรอบเวลาส่งมอบ 45 วัน ฝ่ายเราต้องส่งใบเสนอราคาแก้ไขภายในวันที่ 15 ต.ค.
+        </p>
+      </div>
+
+      <!-- 2. Action Items Checklist -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-white uppercase font-mono">2. สิ่งที่ต้องดำเนินการต่อ (ACTION ITEMS)</span>
+          <span class="text-[10px] text-neutral-500 font-mono">แตะเพื่อติ๊กงาน</span>
+        </div>
+
+        <div class="space-y-2">
+          <!-- Item 1 -->
+          <div onclick="toggleCheck(this)" class="p-2.5 rounded-lg border border-neutral-800 bg-black flex items-start gap-2.5 cursor-pointer active:bg-neutral-900 transition">
+            <span class="check-box w-4 h-4 rounded border border-white bg-white text-black flex items-center justify-center text-[10px] font-bold mt-0.5">✓</span>
+            <div class="text-xs flex-1">
+              <div class="task-text font-semibold text-neutral-400 line-through">ส่งใบเสนอราคาฉบับแก้ไขตามสเปกใหม่</div>
+              <div class="text-[10px] text-neutral-400 mt-0.5">ผู้รับผิดชอบ: นายกานต์ (ฝ่ายขาย) • กำหนด: 15 ต.ค.</div>
+            </div>
+          </div>
+
+          <!-- Item 2 -->
+          <div onclick="toggleCheck(this)" class="p-2.5 rounded-lg border border-neutral-800 bg-black flex items-start gap-2.5 cursor-pointer active:bg-neutral-900 transition">
+            <span class="check-box w-4 h-4 rounded border border-neutral-600 flex items-center justify-center text-[10px] font-bold mt-0.5"></span>
+            <div class="text-xs flex-1">
+              <div class="task-text font-semibold text-white">ทดสอบความเร็ว Gateway ณ คลังสินค้าจริง</div>
+              <div class="text-[10px] text-neutral-400 mt-0.5">ผู้รับผิดชอบ: ทีมวิศวกร (วีระศักดิ์) • กำหนด: 22 ต.ค.</div>
+            </div>
+          </div>
+
+          <!-- Item 3 -->
+          <div onclick="toggleCheck(this)" class="p-2.5 rounded-lg border border-neutral-800 bg-black flex items-start gap-2.5 cursor-pointer active:bg-neutral-900 transition">
+            <span class="check-box w-4 h-4 rounded border border-neutral-600 flex items-center justify-center text-[10px] font-bold mt-0.5"></span>
+            <div class="text-xs flex-1">
+              <div class="task-text font-semibold text-white">นัดหมายลงนามสัญญาข้อตกลงร่วม (MOU)</div>
+              <div class="text-[10px] text-neutral-400 mt-0.5">ผู้รับผิดชอบ: ผู้บริหารทั้งสองฝ่าย • กำหนด: 28 ต.ค.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Photo Evidence Attachments -->
+      <div class="border border-neutral-800 rounded-xl p-3.5 bg-neutral-950 space-y-2">
+        <span class="text-[11px] font-bold text-white uppercase font-mono">3. ภาพถ่ายเอกสารอ้างอิงประกอบ</span>
+        <div class="border border-neutral-800 rounded-lg p-2.5 bg-black flex items-center gap-3">
+          <div class="w-12 h-10 bg-neutral-900 border border-neutral-700 rounded flex items-center justify-center font-mono text-[9px] text-neutral-400">
+            [สแกน]
+          </div>
+          <div class="text-xs flex-1">
+            <div class="font-medium text-white">แบบร่าง Gateway ไวท์บอร์ดห้อง A</div>
+            <div class="text-[10px] text-neutral-400 font-mono mt-0.5">เวลาบทสนทนา: 00:15 น.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Button -->
+      <div class="pt-2">
+        <button onclick="openPdfModal()" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:bg-neutral-200 transition">
+          <span>เปิดดูและดาวน์โหลดเอกสาร PDF (มีลายเซ็น & หัวจดหมาย)</span>
+          <span>↓</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 3: MOBILE LANDING PAGE -->
+    <!-- ========================================================================= -->
+    <div id="screen-landing" class="hidden flex-1 p-5 space-y-6 pb-24">
+      <div class="text-center space-y-3 pt-3">
+        <div class="inline-block px-2.5 py-0.5 rounded-full border border-neutral-800 bg-neutral-950 text-[10px] font-mono text-neutral-300">
+          ENTERPRISE WORKFLOW 2026
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-white leading-tight">
+          บันทึกเสียงคุยลูกค้า<br>
+          สแกนภาพเป็น PDF<br>
+          <span class="text-neutral-400">จบในเครื่องเดียว</span>
+        </h1>
+        <p class="text-xs text-neutral-400 leading-relaxed">
+          ออกแบบเฉพาะสำหรับทีมงานและผู้บริหาร ถอดความภาษาไทยแม่นยำ ผูกภาพถ่ายไวท์บอร์ดเข้ากับเสียง และส่งออกรายงานมาตรฐานองค์กรทันที
+        </p>
+      </div>
+
+      <!-- Features -->
+      <div class="space-y-2.5">
+        <div class="p-3.5 rounded-xl border border-neutral-800 bg-neutral-950 space-y-1">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>01. ถอดเสียงภาษาไทยแม่นยำ</span>
+            <span class="font-mono text-neutral-400">98.4%</span>
+          </div>
+          <p class="text-xs text-neutral-400 leading-relaxed">
+            แยกผู้พูดอัตโนมัติ รองรับคำทับศัพท์และศัพท์ธุรกิจไทย-อังกฤษ
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-neutral-800 bg-neutral-950 space-y-1">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>02. ถ่ายรูปผูกกับเวลาพูด</span>
+            <span class="font-mono text-neutral-400">TIME-SYNC</span>
+          </div>
+          <p class="text-xs text-neutral-400 leading-relaxed">
+            สแกนเอกสารหรือกระดาน ระบบจำวินาทีที่พูดถึงเพื่อความถูกต้อง
+          </p>
+        </div>
+
+        <div class="p-3.5 rounded-xl border border-neutral-800 bg-neutral-950 space-y-1">
+          <div class="flex items-center justify-between text-xs font-bold text-white">
+            <span>03. เอกสาร PDF มาตรฐานสูง</span>
+            <span class="font-mono text-neutral-400">ISO READY</span>
+          </div>
+          <p class="text-xs text-neutral-400 leading-relaxed">
+            จัดหน้าทางการ มีหัวจดหมายบริษัท รายการ Action Items และช่องเซ็นชื่อ
+          </p>
+        </div>
+      </div>
+
+      <!-- Enterprise Security -->
+      <div class="p-3.5 rounded-xl border border-neutral-900 bg-black text-[11px] text-neutral-400 text-center font-mono space-y-1">
+        <div class="text-white font-semibold">🔒 มาตรฐานความปลอดภัยองค์กร & PDPA</div>
+        <div>เข้ารหัส AES-256 • ไม่นำข้อมูลไปฝึกสอน AI สาธารณะ</div>
+      </div>
+
+      <!-- CTAs -->
+      <div class="space-y-2 pt-1">
+        <button onclick="switchScreen('record')" class="w-full py-3.5 rounded-xl bg-white text-black font-bold text-xs flex items-center justify-center gap-2 active:bg-neutral-200 transition">
+          <span>เริ่มบันทึกงานภาคสนาม</span>
+          <span>→</span>
+        </button>
+        <button onclick="switchScreen('auth')" class="w-full py-3 rounded-xl border border-neutral-800 bg-neutral-950 text-white font-medium text-xs active:bg-neutral-900 transition">
+          เข้าสู่ระบบพนักงาน
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCREEN 4: CORPORATE AUTH -->
+    <!-- ========================================================================= -->
+    <div id="screen-auth" class="hidden flex-1 p-5 space-y-6 flex flex-col justify-center pb-24">
+      <div class="text-center space-y-2">
+        <div class="w-10 h-10 rounded-xl bg-white text-black font-bold flex items-center justify-center text-sm mx-auto">
+          D
+        </div>
+        <h2 class="text-lg font-bold text-white">ลงชื่อเข้าใช้งานองค์กร</h2>
+        <p class="text-xs text-neutral-400">เข้าใช้งานด้วยบัญชีอีเมลบริษัท หรือระบบ SSO องค์กร</p>
+      </div>
+
+      <!-- SSO Buttons -->
+      <div class="space-y-2">
+        <button onclick="switchScreen('record')" class="w-full py-3 px-3 rounded-xl border border-neutral-700 bg-neutral-950 text-white text-xs font-semibold flex items-center justify-center gap-2 active:bg-neutral-900 transition">
+          <span>Google Workspace SSO</span>
+        </button>
+        <button onclick="switchScreen('record')" class="w-full py-3 px-3 rounded-xl border border-neutral-700 bg-neutral-950 text-white text-xs font-semibold flex items-center justify-center gap-2 active:bg-neutral-900 transition">
+          <span>Microsoft 365 Entra ID</span>
+        </button>
+      </div>
+
+      <div class="relative flex items-center justify-center">
+        <div class="border-t border-neutral-800 w-full"></div>
+        <span class="bg-black px-2 text-[10px] text-neutral-500 font-mono">หรือ อีเมลพนักงาน</span>
+      </div>
+
+      <!-- Form -->
+      <form onsubmit="event.preventDefault(); switchScreen('record');" class="space-y-3">
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-neutral-300">อีเมลบริษัท</label>
+          <input type="email" placeholder="name@company.com" required class="w-full px-3 py-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[11px] font-medium text-neutral-300">รหัสผ่าน</label>
+          <input type="password" placeholder="••••••••••••" required class="w-full px-3 py-2.5 rounded-lg bg-neutral-950 border border-neutral-800 text-xs text-white placeholder-neutral-600 focus:outline-none focus:border-white">
+        </div>
+        <button type="submit" class="w-full py-3 rounded-xl bg-white text-black font-bold text-xs active:bg-neutral-200 transition mt-2">
+          เข้าสู่ระบบ
+        </button>
+      </form>
+
+      <div class="text-center text-[10px] text-neutral-500 font-mono">
+        PDPA & Enterprise Policy Protected
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Persistent) -->
+    <div class="absolute bottom-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-md border-t border-neutral-900 flex items-center justify-around px-4 z-40">
+      <button onclick="switchScreen('record')" class="flex flex-col items-center gap-1 text-white">
+        <span class="text-sm">🎙</span>
+        <span class="text-[10px] font-medium">อัดเสียง</span>
+      </button>
+      <button onclick="document.getElementById('camera-input').click()" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
+        <span class="text-sm">📷</span>
+        <span class="text-[10px] font-medium">สแกนรูป</span>
+      </button>
+      <button onclick="switchScreen('dossier')" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
+        <span class="text-sm">📑</span>
+        <span class="text-[10px] font-medium">รายงาน</span>
+      </button>
+      <button onclick="openPdfModal()" class="flex flex-col items-center gap-1 text-neutral-500 hover:text-white">
+        <span class="text-sm">↓</span>
+        <span class="text-[10px] font-medium">ออก PDF</span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: VECTOR PRINTABLE PDF (PREVIEW & PRINT TO PDF) -->
+  <!-- ========================================================================= -->
+  <div id="pdf-modal" class="fixed inset-0 z-50 hidden bg-black/90 backdrop-blur-sm flex items-center justify-center p-3">
+    <div class="w-full max-w-sm max-h-[92vh] bg-white text-black rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+      
+      <!-- Modal Header -->
+      <div class="p-3.5 bg-neutral-100 border-b border-neutral-300 flex items-center justify-between no-print">
+        <div class="font-bold text-xs text-black tracking-tight">ตัวอย่างเอกสาร PDF มาตรฐานองค์กร</div>
+        <button onclick="closePdfModal()" class="w-6 h-6 rounded-full bg-neutral-200 text-black flex items-center justify-center text-xs font-bold">
+          ✕
+        </button>
+      </div>
+
+      <!-- Printable Document Container (A4 Vector Layout) -->
+      <div class="print-container p-5 overflow-y-auto space-y-4 text-xs font-sans leading-relaxed text-black bg-white">
+        <!-- Title & Letterhead -->
+        <div class="border-b-2 border-black pb-2 flex justify-between items-start">
+          <div>
+            <div class="font-bold text-sm tracking-tight">DOSSIER REPORT</div>
+            <div class="text-[10px] text-neutral-600">บันทึกข้อตกลงการเข้าพบลูกค้า (Official Dossier)</div>
+          </div>
+          <div class="text-right text-[10px] font-mono text-neutral-600">
+            <div>DOC: 2026-089</div>
+            <div>11/10/2026</div>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="space-y-1">
+          <div class="font-bold text-[11px] uppercase">1. สาระสำคัญของข้อตกลง</div>
+          <p class="text-[11px] text-neutral-800 leading-normal">
+            ลูกค้า (SCG) อนุมัติสเปกตามแบบร่างบนกระดานไวท์บอร์ด โดยตกลงกรอบเวลาส่งมอบระยะแรกภายใน 45 วัน
+          </p>
+        </div>
+
+        <!-- Action Items Table -->
+        <div class="space-y-1">
+          <div class="font-bold text-[11px] uppercase">2. รายการส่งมอบ (ACTION ITEMS)</div>
+          <table class="w-full text-left border border-neutral-300 text-[10px]">
+            <thead class="bg-neutral-100 border-b border-neutral-300 font-bold">
+              <tr>
+                <th class="p-1.5 border-r border-neutral-300">งาน</th>
+                <th class="p-1.5 border-r border-neutral-300">ผู้รับผิดชอบ</th>
+                <th class="p-1.5">กำหนดส่ง</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200">
+              <tr>
+                <td class="p-1.5 border-r border-neutral-300">ส่งใบเสนอราคาฉบับใหม่</td>
+                <td class="p-1.5 border-r border-neutral-300">นายกานต์</td>
+                <td class="p-1.5 font-mono">15 ต.ค.</td>
+              </tr>
+              <tr>
+                <td class="p-1.5 border-r border-neutral-300">ทดสอบ Gateway ณ คลังสินค้า</td>
+                <td class="p-1.5 border-r border-neutral-300">ทีมวิศวกร</td>
+                <td class="p-1.5 font-mono">22 ต.ค.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Attachment Evidence -->
+        <div class="space-y-1">
+          <div class="font-bold text-[11px] uppercase">3. เอกสารอ้างอิงประกอบบทสนทนา</div>
+          <div class="border border-neutral-300 p-2 rounded bg-neutral-50 flex items-center gap-2">
+            <div class="w-14 h-10 bg-neutral-200 border border-neutral-300 rounded flex items-center justify-center text-[9px] font-mono">
+              [รูปสแกน]
+            </div>
+            <div class="text-[10px] leading-tight">
+              <span class="font-bold">ภาพไวท์บอร์ดห้อง A (นาที 00:15)</span><br>
+              <span class="text-neutral-600 font-mono">OCR: ส่งข้อมูลผ่าน Gateway 1.5 วินาที</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Signatures -->
+        <div class="pt-2 grid grid-cols-2 gap-2 text-center text-[10px] border-t border-neutral-300">
+          <div>
+            <div class="border-b border-neutral-400 pb-4 mb-1"></div>
+            <div>( วีระศักดิ์ สุขสวัสดิ์ )<br>ผู้แทนบริษัท</div>
+          </div>
+          <div>
+            <div class="border-b border-neutral-400 pb-4 mb-1"></div>
+            <div>( สมเกียรติ เลิศปัญญากุล )<br>ตัวแทนลูกค้า</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Print Button -->
+      <div class="p-3 bg-neutral-100 border-t border-neutral-300 no-print">
+        <button onclick="window.print()" class="w-full py-2.5 rounded-lg bg-black text-white font-bold text-xs active:bg-neutral-800 transition">
+          บันทึกเป็นเอกสาร PDF ทันที
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript for Screen Management, Audio Recorder & Photos -->
+  <script>
+    let isRecording = false;
+    let seconds = 0;
+    let timerInterval = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let audioCtx = null;
+    let analyser = null;
+    let animId = null;
+
+    // Switch between screens
+    function switchScreen(screenId) {
+      ['record', 'dossier', 'landing', 'auth'].forEach(s => {
+        document.getElementById('screen-' + s).classList.add('hidden');
+        const tab = document.getElementById('tab-' + s);
+        if (tab) {
+          tab.className = 'py-2 rounded-md text-neutral-400 hover:text-white text-center transition';
+        }
+      });
+      document.getElementById('screen-' + screenId).classList.remove('hidden');
+      const activeTab = document.getElementById('tab-' + screenId);
+      if (activeTab) {
+        activeTab.className = 'py-2 rounded-md bg-white text-black font-semibold text-center transition';
+      }
+    }
+
+    // Real Microphone Toggle & Web Audio Analyser
+    async function toggleMicrophone() {
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          
+          // AudioContext & Analyser
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 64;
+          const source = audioCtx.createMediaStreamSource(stream);
+          source.connect(analyser);
+
+          // Waveform Animation
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          const bars = document.querySelectorAll('.wave-bar');
+
+          function renderWave() {
+            analyser.getByteFrequencyData(dataArray);
+            bars.forEach((bar, i) => {
+              const val = dataArray[i * 2] || 0;
+              const h = Math.max(4, Math.round((val / 255) * 44));
+              bar.style.height = h + 'px';
+              bar.style.backgroundColor = '#ffffff';
+            });
+            animId = requestAnimationFrame(renderWave);
+          }
+          renderWave();
+
+          // MediaRecorder
+          audioChunks = [];
+          mediaRecorder = new MediaRecorder(stream);
+          mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+            const player = document.getElementById('recorded-audio-player');
+            player.src = url;
+            document.getElementById('audio-playback-box').classList.remove('hidden');
+            stream.getTracks().forEach(t => t.stop());
+            if (animId) cancelAnimationFrame(animId);
+            if (audioCtx) audioCtx.close();
+            bars.forEach(b => { b.style.height = '4px'; b.style.backgroundColor = '#262626'; });
+          };
+          mediaRecorder.start(1000);
+
+          // State updates
+          isRecording = true;
+          document.getElementById('mic-btn-icon').innerText = '❚❚';
+          document.getElementById('mic-btn-text').innerText = 'หยุดบันทึก';
+          document.getElementById('mic-status-label').innerText = 'กำลังบันทึกเสียงสดจากไมโครโฟน';
+          document.getElementById('mic-pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-white animate-pulse';
+          document.getElementById('rec-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-white animate-pulse';
+          document.getElementById('rec-status-badge').innerText = 'LIVE REC';
+
+          timerInterval = setInterval(() => {
+            seconds++;
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-counter').innerText = `${m}:${s}`;
+          }, 1000);
+
+        } catch (err) {
+          alert('กรุณาอนุญาตการเข้าถึงไมโครโฟน เพื่อบันทึกเสียงจริง');
+        }
+      } else {
+        // Stop recording
+        isRecording = false;
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        clearInterval(timerInterval);
+
+        document.getElementById('mic-btn-icon').innerText = '🎙';
+        document.getElementById('mic-btn-text').innerText = 'เริ่มบันทึกเสียง';
+        document.getElementById('mic-status-label').innerText = 'พักการบันทึกเสียง';
+        document.getElementById('mic-pulse-dot').className = 'w-2.5 h-2.5 rounded-full bg-neutral-600';
+        document.getElementById('rec-status-dot').className = 'w-1.5 h-1.5 rounded-full bg-neutral-600';
+        document.getElementById('rec-status-badge').innerText = 'STANDBY';
+      }
+    }
+
+    // Photo Capture & Preview
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const currentTime = document.getElementById('timer-counter').innerText;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const dataUrl = evt.target.result;
+        const list = document.getElementById('attachments-list');
+        const count = document.getElementById('doc-count');
+        count.innerText = parseInt(count.innerText) + 1;
+
+        const newTile = document.createElement('div');
+        newTile.className = 'border border-neutral-800 rounded-xl p-3 bg-neutral-950 flex items-center justify-between gap-3';
+        newTile.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-neutral-900 border border-neutral-700 rounded-lg overflow-hidden flex items-center justify-center">
+              <img src="${dataUrl}" class="w-full h-full object-cover">
+            </div>
+            <div class="text-left">
+              <div class="text-xs font-semibold text-white">ภาพถ่ายเอกสารหน้างาน #${count.innerText}</div>
+              <div class="text-[10px] text-neutral-400 truncate max-w-[170px] mt-0.5">
+                OCR: ข้อความบันทึกยืนยันมติ
+              </div>
+            </div>
+          </div>
+          <span class="font-mono text-xs px-2 py-0.5 rounded border border-neutral-700 bg-black text-white font-bold">${currentTime}</span>
+        `;
+        list.prepend(newTile);
+        alert(`📷 ถ่ายรูปเอกสารสำเร็จ!\nระบบทำการปักหมุดเวลาสัมพันธ์กับเสียง [${currentTime}] เรียบร้อยแล้ว`);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    // Action Items Checkbox
+    function toggleCheck(el) {
+      const box = el.querySelector('.check-box');
+      const text = el.querySelector('.task-text');
+      if (box.innerText === '✓') {
+        box.innerText = '';
+        box.className = 'check-box w-4 h-4 rounded border border-neutral-600 flex items-center justify-center text-[10px] font-bold mt-0.5';
+        text.className = 'task-text font-semibold text-white';
+      } else {
+        box.innerText = '✓';
+        box.className = 'check-box w-4 h-4 rounded border border-white bg-white text-black flex items-center justify-center text-[10px] font-bold mt-0.5';
+        text.className = 'task-text font-semibold text-neutral-400 line-through';
+      }
+    }
+
+    // PDF Modal
+    function openPdfModal() {
+      document.getElementById('pdf-modal').classList.remove('hidden');
+    }
+    function closePdfModal() {
+      document.getElementById('pdf-modal').classList.add('hidden');
+    }
+
+    // Status Bar Clock
+    setInterval(() => {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      document.getElementById('clock-display').innerText = `${h}:${m}`;
+    }, 1000);
+  </script>
+
+</body>
+</html>
